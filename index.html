@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinyaIIT — Smart Campus Queue Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="container header-inner">
+            <div class="brand">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>LinyaIIT</h1>
+                    <span>Smart Campus Queue Management</span>
+                </div>
+            </div>
+
+            <nav class="main-nav" aria-label="Main Views">
+                <button class="nav-btn active" data-view="student">Student Portal</button>
+                <button class="nav-btn" data-view="staff">Staff Dashboard</button>
+                <button class="nav-btn" data-view="analytics">Analytics</button>
+            </nav>
+
+            <div class="header-actions">
+                <span id="liveClock" class="live-clock" title="Current Campus Time">--:--:--</span>
+                <button id="soundToggleBtn" class="icon-btn" title="Toggle Audio Alerts" aria-label="Toggle Audio Alerts">
+                    <span id="soundIcon">🔔</span>
+                </button>
+                <button id="themeToggleBtn" class="icon-btn" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Live Campus Ticker -->
+    <div class="ticker-bar">
+        <div class="container ticker-inner">
+            <span class="ticker-badge">LIVE SERVING</span>
+            <div id="liveTickerContent" class="ticker-content">No active counters serving right now.</div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="container main-content">
+        
+        <!-- ==================== STUDENT VIEW ==================== -->
+        <section id="view-student" class="view-section active">
+            <div class="welcome-banner">
+                <div>
+                    <h2>Less Waiting. Better Service. Smarter MSU-IIT.</h2>
+                    <p>Mindanao State University – Iligan Institute of Technology Digital Queue System</p>
+                </div>
+                <div class="quick-stats-pill">
+                    <span>Active Waiting: <strong id="studentTotalWaiting">0</strong></span>
+                </div>
+            </div>
+
+            <div class="grid-2-col">
+                <!-- Ticket Generator Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Get a Digital Queue Ticket</h3>
+                        <p>Select your target campus office and transaction service</p>
+                    </div>
+                    <form id="ticketForm" class="form-stack">
+                        <div class="form-group">
+                            <label for="studentName">Full Name <span class="req">*</span></label>
+                            <input type="text" id="studentName" placeholder="e.g., Juan Dela Cruz" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="studentId">ID Number (Optional)</label>
+                            <input type="text" id="studentId" placeholder="e.g., 2026-0001">
+                        </div>
+                        <div class="form-group">
+                            <label for="officeSelect">Campus Office <span class="req">*</span></label>
+                            <select id="officeSelect" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="serviceSelect">Transaction Service <span class="req">*</span></label>
+                            <select id="serviceSelect" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority Lane</label>
+                            <div class="radio-group">
+                                <label class="radio-card">
+                                    <input type="radio" name="priority" value="regular" checked>
+                                    <span>Regular Student / Visitor</span>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="priority" value="priority">
+                                    <span>Priority (PWD / Pregnant / Senior)</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Generate Queue Ticket</button>
+                    </form>
+                </div>
+
+                <!-- Active Ticket & Tracking Panel -->
+                <div class="stack-col">
+                    <div id="activeTicketContainer" class="card active-ticket-card hidden">
+                        <div class="ticket-top-bar">
+                            <span class="badge-live">ACTIVE TICKET</span>
+                            <button id="printTicketBtn" class="btn btn-sm btn-outline">🖨️ Print / Save Pass</button>
+                        </div>
+                        <div class="ticket-display">
+                            <div class="ticket-office" id="dispOffice">Office Name</div>
+                            <div class="ticket-number" id="dispNumber">REG-001</div>
+                            <div class="ticket-service" id="dispService">Service Name</div>
+                            <div id="dispPriorityBadge" class="priority-tag hidden">PRIORITY LANE</div>
+                        </div>
+                        <div class="ticket-metrics">
+                            <div class="metric-box">
+                                <span class="metric-label">Ahead of You</span>
+                                <span class="metric-val" id="dispAhead">0</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="metric-label">Est. Wait</span>
+                                <span class="metric-val" id="dispEstWait">0m</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="metric-label">Status</span>
+                                <span class="metric-val status-text" id="dispStatus">Waiting</span>
+                            </div>
+                        </div>
+                        <div id="turnAlertBanner" class="turn-alert hidden">
+                            ⚡ <strong>YOUR TURN IS APPROACHING / NOW SERVING!</strong> Please proceed to the counter immediately.
+                        </div>
+                    </div>
+
+                    <div id="noActiveTicketPlaceholder" class="card empty-state-card">
+                        <div class="empty-icon">🎫</div>
+                        <h4>No Active Ticket</h4>
+                        <p>Fill out the form to generate a digital ticket and monitor your live position in the queue.</p>
+                    </div>
+
+                    <!-- My Ticket History -->
+                    <div class="card">
+                        <div class="card-header row-between">
+                            <div>
+                                <h3>My Ticket History</h3>
+                                <p>Your recent digital passes on this device</p>
+                            </div>
+                            <button id="clearMyHistoryBtn" class="btn btn-sm btn-ghost">Clear</button>
+                        </div>
+                        <div id="myHistoryList" class="history-list">
+                            <p class="muted-text">No tickets generated on this device yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== STAFF VIEW ==================== -->
+        <section id="view-staff" class="view-section">
+            <div class="staff-controls-bar card">
+                <div class="control-group">
+                    <label for="staffOfficeFilter">Manage Office Queue:</label>
+                    <select id="staffOfficeFilter"></select>
+                </div>
+                <div class="control-group">
+                    <label for="staffWindowSelect">Counter Window:</label>
+                    <select id="staffWindowSelect">
+                        <option value="Window 1">Window 1</option>
+                        <option value="Window 2">Window 2</option>
+                        <option value="Window 3">Window 3</option>
+                        <option value="Window 4">Window 4</option>
+                    </select>
+                </div>
+                <div class="staff-global-actions">
+                    <button id="exportCsvBtn" class="btn btn-outline">📥 Export CSV</button>
+                    <button id="resetQueueBtn" class="btn btn-danger">🗑️ Reset Queue</button>
+                </div>
+            </div>
+
+            <!-- Currently Serving Banner -->
+            <div class="card serving-panel">
+                <div class="serving-info">
+                    <span class="serving-label">CURRENTLY SERVING (<span id="servingWindowLabel">Window 1</span>)</span>
+                    <div id="currentServingNumber" class="serving-number">---</div>
+                    <div id="currentServingDetails" class="serving-details">No student currently being served</div>
+                    <div id="servingTimer" class="serving-timer hidden">Elapsed: 00:00</div>
+                </div>
+                <div class="serving-actions">
+                    <button id="callNextBtn" class="btn btn-primary btn-lg">📢 Call Next</button>
+                    <button id="recallBtn" class="btn btn-secondary" disabled>🔔 Recall</button>
+                    <button id="completeBtn" class="btn btn-success" disabled>✅ Mark Completed</button>
+                    <button id="skipBtn" class="btn btn-warning" disabled>⏭️ Skip Ticket</button>
+                </div>
+            </div>
+
+            <!-- Queue Lists Tabs & Search -->
+            <div class="card">
+                <div class="queue-toolbar">
+                    <div class="tab-pills">
+                        <button class="tab-pill active" data-tab="waiting">Waiting (<span id="countWaiting">0</span>)</button>
+                        <button class="tab-pill" data-tab="skipped">Skipped (<span id="countSkipped">0</span>)</button>
+                        <button class="tab-pill" data-tab="completed">Completed (<span id="countCompleted">0</span>)</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="staffSearchInput" placeholder="Search ticket #, name, or service...">
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Student / Visitor</th>
+                                <th>Office & Service</th>
+                                <th>Priority</th>
+                                <th>Issued At</th>
+                                <th>Wait Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffQueueTableBody">
+                            <!-- Rows injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== ANALYTICS VIEW ==================== -->
+        <section id="view-analytics" class="view-section">
+            <div class="kpi-grid">
+                <div class="card kpi-card">
+                    <span class="kpi-title">Total Tickets Issued</span>
+                    <span class="kpi-value" id="kpiTotal">0</span>
+                </div>
+                <div class="card kpi-card">
+                    <span class="kpi-title">Completed Transactions</span>
+                    <span class="kpi-value text-success" id="kpiCompleted">0</span>
+                </div>
+                <div class="card kpi-card">
+                    <span class="kpi-title">Skipped Tickets</span>
+                    <span class="kpi-value text-warning" id="kpiSkipped">0</span>
+                </div>
+                <div class="card kpi-card">
+                    <span class="kpi-title">Avg. Waiting Time</span>
+                    <span class="kpi-value text-accent" id="kpiAvgWait">N/A</span>
+                </div>
+            </div>
+
+            <div class="grid-2-col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Most Requested Services</h3>
+                        <p>Distribution of tickets across campus services</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="serviceChart" width="400" height="260"></canvas>
+                    </div>
+                    <div id="serviceBreakdownList" class="breakdown-list"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Queue Activity by Office</h3>
+                        <p>Total tickets handled per campus office</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="officeChart" width="400" height="260"></canvas>
+                    </div>
+                    <div id="officeBreakdownList" class="breakdown-list"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container footer-inner">
+            <p><strong>LinyaIIT</strong> — Smart Campus Queue Management System | Mindanao State University – Iligan Institute of Technology</p>
+            <p class="footer-sub">Less Waiting. Better Service. Smarter MSU-IIT.</p>
+        </div>
+    </footer>
+
+    <!-- Printable Digital Ticket Modal -->
+    <div id="printModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-card printable-area">
+            <div class="print-ticket-box">
+                <div class="print-header">
+                    <h2>LinyaIIT</h2>
+                    <p>MSU-IIT Smart Campus Queue Pass</p>
+                </div>
+                <div class="print-body">
+                    <div id="printOffice" class="print-office">OFFICE</div>
+                    <div id="printNumber" class="print-number">REG-001</div>
+                    <div id="printService" class="print-service">Service</div>
+                    <div id="printStudent" class="print-meta">Student Name</div>
+                    <div id="printTime" class="print-meta">Issued: --:--</div>
+                    <div id="printPriority" class="print-priority">REGULAR LANE</div>
+                </div>
+                <div class="print-footer">
+                    <p>Please monitor your queue status on LinyaIIT.</p>
+                    <p>Less Waiting. Better Service. Smarter MSU-IIT.</p>
+                </div>
+            </div>
+            <div class="modal-actions no-print">
+                <button id="triggerPrintBtn" class="btn btn-primary">🖨️ Print Ticket</button>
+                <button id="closePrintModalBtn" class="btn btn-outline">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Dialog Modal -->
+    <div id="confirmModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-card confirm-box">
+            <h3 id="confirmTitle">Confirm Action</h3>
+            <p id="confirmMessage">Are you sure you want to proceed?</p>
+            <div class="modal-actions">
+                <button id="confirmCancelBtn" class="btn btn-outline">Cancel</button>
+                <button id="confirmOkBtn" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
