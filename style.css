@@ -208,18 +208,56 @@ body {
     padding-bottom: 40px;
 }
 
-.view-section {
+.view-section,
+.staff-subview {
     display: none;
     animation: fadeIn 0.25s ease;
 }
 
-.view-section.active {
+.view-section.active,
+.staff-subview.active {
     display: block;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Staff Sub-Navigation Bar */
+.staff-subnav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid var(--cyan);
+}
+
+.subnav-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.subnav-btn {
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.subnav-btn.active {
+    background: var(--navy);
+    color: #FFFFFF;
+    border-color: var(--navy);
 }
 
 /* Welcome Banner */
@@ -325,6 +363,7 @@ body {
 }
 
 input[type="text"],
+input[type="password"],
 select {
     width: 100%;
     padding: 10px 12px;
@@ -338,9 +377,17 @@ select {
 }
 
 input[type="text"]:focus,
+input[type="password"]:focus,
 select:focus {
     outline: none;
     border-color: var(--blue);
+}
+
+.auth-error {
+    color: var(--danger);
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 4px;
 }
 
 .radio-group {

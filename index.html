@@ -30,8 +30,7 @@
 
             <nav class="main-nav" aria-label="Main Views">
                 <button class="nav-btn active" data-view="student">Student Portal</button>
-                <button class="nav-btn" data-view="staff">Staff Dashboard</button>
-                <button class="nav-btn" data-view="analytics">Analytics</button>
+                <button class="nav-btn" data-view="staff-portal" id="staffPortalNavBtn">🔒 Staff &amp; Analytics</button>
             </nav>
 
             <div class="header-actions">
@@ -165,120 +164,132 @@
             </div>
         </section>
 
-        <!-- ==================== STAFF VIEW ==================== -->
-        <section id="view-staff" class="view-section">
-            <div class="staff-controls-bar card">
-                <div class="control-group">
-                    <label for="staffOfficeFilter">Manage Office Queue:</label>
-                    <select id="staffOfficeFilter"></select>
+        <!-- ==================== PROTECTED STAFF & ANALYTICS PORTAL ==================== -->
+        <section id="view-staff-portal" class="view-section">
+            <!-- Staff Sub-Navigation Bar -->
+            <div class="staff-subnav-bar card">
+                <div class="subnav-tabs">
+                    <button class="subnav-btn active" data-subview="queue">📋 Queue Management</button>
+                    <button class="subnav-btn" data-subview="analytics">📊 Analytics &amp; Reports</button>
                 </div>
-                <div class="control-group">
-                    <label for="staffWindowSelect">Counter Window:</label>
-                    <select id="staffWindowSelect">
-                        <option value="Window 1">Window 1</option>
-                        <option value="Window 2">Window 2</option>
-                        <option value="Window 3">Window 3</option>
-                        <option value="Window 4">Window 4</option>
-                    </select>
-                </div>
-                <div class="staff-global-actions">
-                    <button id="exportCsvBtn" class="btn btn-outline">📥 Export CSV</button>
-                    <button id="resetQueueBtn" class="btn btn-danger">🗑️ Reset Queue</button>
-                </div>
+                <button id="lockStaffBtn" class="btn btn-sm btn-outline">🔒 Lock Staff Portal</button>
             </div>
 
-            <!-- Currently Serving Banner -->
-            <div class="card serving-panel">
-                <div class="serving-info">
-                    <span class="serving-label">CURRENTLY SERVING (<span id="servingWindowLabel">Window 1</span>)</span>
-                    <div id="currentServingNumber" class="serving-number">---</div>
-                    <div id="currentServingDetails" class="serving-details">No student currently being served</div>
-                    <div id="servingTimer" class="serving-timer hidden">Elapsed: 00:00</div>
-                </div>
-                <div class="serving-actions">
-                    <button id="callNextBtn" class="btn btn-primary btn-lg">📢 Call Next</button>
-                    <button id="recallBtn" class="btn btn-secondary" disabled>🔔 Recall</button>
-                    <button id="completeBtn" class="btn btn-success" disabled>✅ Mark Completed</button>
-                    <button id="skipBtn" class="btn btn-warning" disabled>⏭️ Skip Ticket</button>
-                </div>
-            </div>
-
-            <!-- Queue Lists Tabs & Search -->
-            <div class="card">
-                <div class="queue-toolbar">
-                    <div class="tab-pills">
-                        <button class="tab-pill active" data-tab="waiting">Waiting (<span id="countWaiting">0</span>)</button>
-                        <button class="tab-pill" data-tab="skipped">Skipped (<span id="countSkipped">0</span>)</button>
-                        <button class="tab-pill" data-tab="completed">Completed (<span id="countCompleted">0</span>)</button>
+            <!-- SUB-VIEW 1: STAFF QUEUE MANAGEMENT -->
+            <div id="subview-queue" class="staff-subview active">
+                <div class="staff-controls-bar card">
+                    <div class="control-group">
+                        <label for="staffOfficeFilter">Manage Office Queue:</label>
+                        <select id="staffOfficeFilter"></select>
                     </div>
-                    <div class="search-box">
-                        <input type="text" id="staffSearchInput" placeholder="Search ticket #, name, or service...">
+                    <div class="control-group">
+                        <label for="staffWindowSelect">Counter Window:</label>
+                        <select id="staffWindowSelect">
+                            <option value="Window 1">Window 1</option>
+                            <option value="Window 2">Window 2</option>
+                            <option value="Window 3">Window 3</option>
+                            <option value="Window 4">Window 4</option>
+                        </select>
+                    </div>
+                    <div class="staff-global-actions">
+                        <button id="exportCsvBtn" class="btn btn-outline">📥 Export CSV</button>
+                        <button id="resetQueueBtn" class="btn btn-danger">🗑️ Reset Queue</button>
                     </div>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Ticket #</th>
-                                <th>Student / Visitor</th>
-                                <th>Office & Service</th>
-                                <th>Priority</th>
-                                <th>Issued At</th>
-                                <th>Wait Time</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="staffQueueTableBody">
-                            <!-- Rows injected dynamically -->
-                        </tbody>
-                    </table>
+                <!-- Currently Serving Banner -->
+                <div class="card serving-panel">
+                    <div class="serving-info">
+                        <span class="serving-label">CURRENTLY SERVING (<span id="servingWindowLabel">Window 1</span>)</span>
+                        <div id="currentServingNumber" class="serving-number">---</div>
+                        <div id="currentServingDetails" class="serving-details">No student currently being served</div>
+                        <div id="servingTimer" class="serving-timer hidden">Elapsed: 00:00</div>
+                    </div>
+                    <div class="serving-actions">
+                        <button id="callNextBtn" class="btn btn-primary btn-lg">📢 Call Next</button>
+                        <button id="recallBtn" class="btn btn-secondary" disabled>🔔 Recall</button>
+                        <button id="completeBtn" class="btn btn-success" disabled>✅ Mark Completed</button>
+                        <button id="skipBtn" class="btn btn-warning" disabled>⏭️ Skip Ticket</button>
+                    </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- ==================== ANALYTICS VIEW ==================== -->
-        <section id="view-analytics" class="view-section">
-            <div class="kpi-grid">
-                <div class="card kpi-card">
-                    <span class="kpi-title">Total Tickets Issued</span>
-                    <span class="kpi-value" id="kpiTotal">0</span>
-                </div>
-                <div class="card kpi-card">
-                    <span class="kpi-title">Completed Transactions</span>
-                    <span class="kpi-value text-success" id="kpiCompleted">0</span>
-                </div>
-                <div class="card kpi-card">
-                    <span class="kpi-title">Skipped Tickets</span>
-                    <span class="kpi-value text-warning" id="kpiSkipped">0</span>
-                </div>
-                <div class="card kpi-card">
-                    <span class="kpi-title">Avg. Waiting Time</span>
-                    <span class="kpi-value text-accent" id="kpiAvgWait">N/A</span>
-                </div>
-            </div>
-
-            <div class="grid-2-col">
+                <!-- Queue Lists Tabs & Search -->
                 <div class="card">
-                    <div class="card-header">
-                        <h3>Most Requested Services</h3>
-                        <p>Distribution of tickets across campus services</p>
+                    <div class="queue-toolbar">
+                        <div class="tab-pills">
+                            <button class="tab-pill active" data-tab="waiting">Waiting (<span id="countWaiting">0</span>)</button>
+                            <button class="tab-pill" data-tab="skipped">Skipped (<span id="countSkipped">0</span>)</button>
+                            <button class="tab-pill" data-tab="completed">Completed (<span id="countCompleted">0</span>)</button>
+                        </div>
+                        <div class="search-box">
+                            <input type="text" id="staffSearchInput" placeholder="Search ticket #, name, or service...">
+                        </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="serviceChart" width="400" height="260"></canvas>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket #</th>
+                                    <th>Student / Visitor</th>
+                                    <th>Office &amp; Service</th>
+                                    <th>Priority</th>
+                                    <th>Issued At</th>
+                                    <th>Wait Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staffQueueTableBody">
+                                <!-- Rows injected dynamically -->
+                            </tbody>
+                        </table>
                     </div>
-                    <div id="serviceBreakdownList" class="breakdown-list"></div>
+                </div>
+            </div>
+
+            <!-- SUB-VIEW 2: ANALYTICS DASHBOARD -->
+            <div id="subview-analytics" class="staff-subview">
+                <div class="kpi-grid">
+                    <div class="card kpi-card">
+                        <span class="kpi-title">Total Tickets Issued</span>
+                        <span class="kpi-value" id="kpiTotal">0</span>
+                    </div>
+                    <div class="card kpi-card">
+                        <span class="kpi-title">Completed Transactions</span>
+                        <span class="kpi-value text-success" id="kpiCompleted">0</span>
+                    </div>
+                    <div class="card kpi-card">
+                        <span class="kpi-title">Skipped Tickets</span>
+                        <span class="kpi-value text-warning" id="kpiSkipped">0</span>
+                    </div>
+                    <div class="card kpi-card">
+                        <span class="kpi-title">Avg. Waiting Time</span>
+                        <span class="kpi-value text-accent" id="kpiAvgWait">N/A</span>
+                    </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Queue Activity by Office</h3>
-                        <p>Total tickets handled per campus office</p>
+                <div class="grid-2-col">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Most Requested Services</h3>
+                            <p>Distribution of tickets across campus services</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="serviceChart" width="400" height="260"></canvas>
+                        </div>
+                        <div id="serviceBreakdownList" class="breakdown-list"></div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="officeChart" width="400" height="260"></canvas>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Queue Activity by Office</h3>
+                            <p>Total tickets handled per campus office</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="officeChart" width="400" height="260"></canvas>
+                        </div>
+                        <div id="officeBreakdownList" class="breakdown-list"></div>
                     </div>
-                    <div id="officeBreakdownList" class="breakdown-list"></div>
                 </div>
             </div>
         </section>
@@ -291,6 +302,25 @@
             <p class="footer-sub">Less Waiting. Better Service. Smarter MSU-IIT.</p>
         </div>
     </footer>
+
+    <!-- Staff Password Authentication Modal -->
+    <div id="staffAuthModal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+        <div class="modal-card confirm-box">
+            <h3>🔒 Staff &amp; Analytics Access</h3>
+            <p>Enter the authorized MSU-IIT staff password to manage queues and view analytics.</p>
+            <form id="staffAuthForm" class="form-stack">
+                <div class="form-group">
+                    <label for="staffPasswordInput">Staff Password</label>
+                    <input type="password" id="staffPasswordInput" placeholder="Enter password..." required autocomplete="current-password">
+                    <span id="staffAuthError" class="auth-error hidden">Incorrect password. Please try again.</span>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancelAuthBtn" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Unlock Portal</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Printable Digital Ticket Modal -->
     <div id="printModal" class="modal-overlay hidden" role="dialog" aria-modal="true">

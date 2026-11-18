@@ -5,6 +5,10 @@
 
 const STORAGE_KEY = 'linyaiit_state_v1';
 const MY_TICKETS_KEY = 'linyaiit_my_tickets_v1';
+const STAFF_AUTH_KEY = 'linyaiit_staff_unlocked';
+
+// Staff Portal Password (Change this value to customize the staff login password)
+const STAFF_PASSWORD = 'msuiit2026';
 
 // MSU-IIT Campus Offices and Services Catalog
 const CAMPUS_OFFICES = [
@@ -88,10 +92,13 @@ let appState = {
 let myTicketIds = [];
 let activeStaffTab = 'waiting';
 let servingTimerInterval = null;
+let isStaffAuthenticated = false;
 
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', () => {
     loadState();
+    isStaffAuthenticated = sessionStorage.getItem(STAFF_AUTH_KEY) === 'true';
+    updateStaffNavBadge();
     initSelectors();
     bindEvents();
     applyTheme();
@@ -169,17 +176,96 @@ function populateServices(officeId) {
     });
 }
 
+// ==================== NAVIGATION & AUTH ====================
+function switchMainView(viewName) {
+    document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === viewName);
+    });
+    document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(`view-${viewName}`).classList.add('active');
+    renderAll();
+}
+
+function updateStaffNavBadge() {
+    const navBtn = document.getElementById('staffPortalNavBtn');
+    if (navBtn) {
+        navBtn.textContent = isStaffAuthenticated ? '🔓 Staff & Analytics' : '🔒 Staff & Analytics';
+    }
+}
+
+function openStaffAuthModal() {
+    const modal = document.getElementById('staffAuthModal');
+    const input = document.getElementById('staffPasswordInput');
+    const errEl = document.getElementById('staffAuthError');
+    input.value = '';
+    errEl.classList.add('hidden');
+    modal.classList.remove('hidden');
+    setTimeout(() => input.focus(), 50);
+}
+
+function lockStaffPortal() {
+    isStaffAuthenticated = false;
+    sessionStorage.removeItem(STAFF_AUTH_KEY);
+    updateStaffNavBadge();
+    switchMainView('student');
+    showToast('Staff & Analytics portal locked.');
+}
+
 // ==================== EVENT LISTENERS ====================
 function bindEvents() {
-    // Navigation views
+    // Main Navigation views with password protection for Staff & Analytics
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
             const target = btn.dataset.view;
-            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-            document.getElementById(`view-${target}`).classList.add('active');
-            renderAll();
+            if (target === 'staff-portal' && !isStaffAuthenticated) {
+                openStaffAuthModal();
+                return;
+            }
+            switchMainView(target);
+        });
+    });
+
+    // Staff Password Form Submit
+    document.getElementById('staffAuthForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inputVal = document.getElementById('staffPasswordInput').value;
+        const errEl = document.getElementById('staffAuthError');
+
+        if (inputVal === STAFF_PASSWORD) {
+            isStaffAuthenticated = true;
+            sessionStorage.setItem(STAFF_AUTH_KEY, 'true');
+            updateStaffNavBadge();
+            document.getElementById('staffAuthModal').classList.add('hidden');
+            switchMainView('staff-portal');
+            showToast('Staff & Analytics unlocked.');
+        } else {
+            errEl.classList.remove('hidden');
+            document.getElementById('staffPasswordInput').select();
+        }
+    });
+
+    document.getElementById('cancelAuthBtn').addEventListener('click', () => {
+        document.getElementById('staffAuthModal').classList.add('hidden');
+    });
+
+    // Lock Staff Portal Button
+    document.getElementById('lockStaffBtn').addEventListener('click', lockStaffPortal);
+
+    // Staff Sub-Navigation (Queue Management vs Analytics)
+    document.querySelectorAll('.subnav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!isStaffAuthenticated) {
+                openStaffAuthModal();
+                return;
+            }
+            document.querySelectorAll('.subnav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const sub = btn.dataset.subview;
+            document.querySelectorAll('.staff-subview').forEach(sv => sv.classList.remove('active'));
+            document.getElementById(`subview-${sub}`).classList.add('active');
+            if (sub === 'analytics') {
+                renderAnalyticsView();
+            }
         });
     });
 
@@ -255,7 +341,7 @@ function bindEvents() {
         appState.darkMode = !appState.darkMode;
         saveState();
         applyTheme();
-        renderAnalyticsView();
+        if (isStaffAuthenticated) renderAnalyticsView();
     });
 
     document.getElementById('soundToggleBtn').addEventListener('click', () => {
@@ -289,8 +375,8 @@ function handleTicketSubmit(e) {
         officeId: office.id,
         officeName: office.name,
         service: service,
-        priority: priority, // 'priority' | 'regular'
-        status: 'waiting',  // 'waiting' | 'serving' | 'completed' | 'skipped'
+        priority: priority,
+        status: 'waiting',
         window: null,
         createdAt: Date.now(),
         calledAt: null,
@@ -310,17 +396,16 @@ function handleTicketSubmit(e) {
 
 function getOrderedWaitingQueue(officeId) {
     const waiting = appState.tickets.filter(t => t.officeId === officeId && t.status === 'waiting');
-    // Priority lane tickets are served ahead of regular tickets while preserving FIFO within each tier
     const priorityGroup = waiting.filter(t => t.priority === 'priority').sort((a, b) => a.createdAt - b.createdAt);
     const regularGroup = waiting.filter(t => t.priority !== 'priority').sort((a, b) => a.createdAt - b.createdAt);
     return [...priorityGroup, ...regularGroup];
 }
 
 function handleCallNext() {
+    if (!isStaffAuthenticated) return;
     const officeId = document.getElementById('staffOfficeFilter').value;
     const windowName = document.getElementById('staffWindowSelect').value;
 
-    // Auto-complete any currently serving ticket for this office if staff clicks Call Next directly
     const currentServing = appState.tickets.find(t => t.officeId === officeId && t.status === 'serving');
     if (currentServing) {
         currentServing.status = 'completed';
@@ -347,6 +432,7 @@ function handleCallNext() {
 }
 
 function handleMarkCompleted() {
+    if (!isStaffAuthenticated) return;
     const officeId = document.getElementById('staffOfficeFilter').value;
     const currentServing = appState.tickets.find(t => t.officeId === officeId && t.status === 'serving');
     if (!currentServing) return;
@@ -359,6 +445,7 @@ function handleMarkCompleted() {
 }
 
 function handleSkipTicket() {
+    if (!isStaffAuthenticated) return;
     const officeId = document.getElementById('staffOfficeFilter').value;
     const currentServing = appState.tickets.find(t => t.officeId === officeId && t.status === 'serving');
     if (!currentServing) return;
@@ -370,6 +457,7 @@ function handleSkipTicket() {
 }
 
 function handleRecallTicket() {
+    if (!isStaffAuthenticated) return;
     const officeId = document.getElementById('staffOfficeFilter').value;
     const currentServing = appState.tickets.find(t => t.officeId === officeId && t.status === 'serving');
     if (!currentServing) return;
@@ -379,6 +467,7 @@ function handleRecallTicket() {
 }
 
 function requeueSkippedTicket(ticketId) {
+    if (!isStaffAuthenticated) return;
     const ticket = appState.tickets.find(t => t.id === ticketId);
     if (!ticket) return;
     ticket.status = 'waiting';
@@ -392,8 +481,10 @@ function requeueSkippedTicket(ticketId) {
 function renderAll() {
     renderTicker();
     renderStudentView();
-    renderStaffView();
-    renderAnalyticsView();
+    if (isStaffAuthenticated) {
+        renderStaffView();
+        renderAnalyticsView();
+    }
 }
 
 function renderTicker() {
@@ -411,7 +502,6 @@ function renderStudentView() {
     const totalWaiting = appState.tickets.filter(t => t.status === 'waiting').length;
     document.getElementById('studentTotalWaiting').textContent = totalWaiting;
 
-    // Find most recent active ticket belonging to this device
     const myTickets = myTicketIds
         .map(id => appState.tickets.find(t => t.id === id))
         .filter(Boolean);
@@ -457,7 +547,6 @@ function renderStudentView() {
         placeholder.classList.remove('hidden');
     }
 
-    // Render history list
     const historyList = document.getElementById('myHistoryList');
     if (myTickets.length === 0) {
         historyList.innerHTML = '<p class="muted-text">No tickets generated on this device yet.</p>';
@@ -516,7 +605,6 @@ function renderStaffView() {
         recallBtn.disabled = true;
     }
 
-    // Update counts for active office
     const waitingCount = getOrderedWaitingQueue(officeId).length;
     const skippedCount = appState.tickets.filter(t => t.officeId === officeId && t.status === 'skipped').length;
     const completedCount = appState.tickets.filter(t => t.officeId === officeId && t.status === 'completed').length;
@@ -590,7 +678,6 @@ function renderAnalyticsView() {
     document.getElementById('kpiCompleted').textContent = completed.length;
     document.getElementById('kpiSkipped').textContent = skipped.length;
 
-    // Average waiting time computed only when sufficient completed/called tickets exist
     const servedTickets = appState.tickets.filter(t => t.calledAt && t.createdAt);
     if (servedTickets.length >= 2) {
         const totalWaitMs = servedTickets.reduce((acc, t) => acc + (t.calledAt - t.createdAt), 0);
@@ -600,7 +687,6 @@ function renderAnalyticsView() {
         document.getElementById('kpiAvgWait').textContent = 'Insufficient data';
     }
 
-    // Service Breakdown
     const serviceCounts = {};
     appState.tickets.forEach(t => {
         serviceCounts[t.service] = (serviceCounts[t.service] || 0) + 1;
@@ -619,7 +705,6 @@ function renderAnalyticsView() {
         `).join('');
     }
 
-    // Office Breakdown
     const officeCounts = CAMPUS_OFFICES.map(o => ({
         label: o.prefix,
         name: o.name,
@@ -657,7 +742,6 @@ function drawBarChart(canvasId, labels, values) {
     const chartW = w - padLeft - 20;
     const chartH = h - padTop - padBottom;
 
-    // Grid lines
     ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
@@ -758,6 +842,7 @@ function openPrintModal() {
 }
 
 function exportToCSV() {
+    if (!isStaffAuthenticated) return;
     if (appState.tickets.length === 0) {
         showToast('No queue records available to export.');
         return;
@@ -849,10 +934,10 @@ function playChime(type) {
         gain.connect(ctx.destination);
 
         if (type === 'call') {
-            osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+            osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
         } else {
-            osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+            osc.frequency.setValueAtTime(523.25, ctx.currentTime);
         }
 
         gain.gain.setValueAtTime(0.12, ctx.currentTime);
@@ -860,7 +945,7 @@ function playChime(type) {
         osc.start();
         osc.stop(ctx.currentTime + 0.45);
     } catch (e) {
-        // Ignore audio restrictions if user has not interacted yet
+        // Ignore audio restrictions
     }
 }
 
